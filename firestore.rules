@@ -1,0 +1,120 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Read the requesting user's own stored role.
+    // ONLY called on write operations that need role verification.
+    // Never called on reads — reads only require isSignedIn().
+    function myRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isProfessorOrAdmin() {
+      return isSignedIn() && myRole() in ['professor', 'admin'];
+    }
+
+    // ── USERS ─────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read:   if isSignedIn();
+      allow write:  if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // ── CLASSES ───────────────────────────────────────────────────────────
+    match /classes/{classId} {
+      allow read:   if isSignedIn();
+
+      // Only professors can create classes
+      allow create: if isProfessorOrAdmin()
+        && request.resource.data.professorId == request.auth.uid;
+
+      // Class owner or enrolled student (for join-code enrollment)
+      allow update: if isSignedIn() && (
+        resource.data.professorId == request.auth.uid ||
+        request.auth.uid in resource.data.students ||
+        (myRole() == 'admin')
+      );
+
+      allow delete: if isSignedIn() && myRole() == 'admin';
+
+      // ── Sub-collections ────────────────────────────────────────────────
+
+      match /resources/{resourceId} {
+        allow read:           if isSignedIn();
+        allow create:         if isProfessorOrAdmin();
+        allow update, delete: if isSignedIn() && (
+          resource.data.uploadedBy == request.auth.uid || myRole() == 'admin'
+        );
+      }
+
+      match /assignments/{assignmentId} {
+        allow read:           if isSignedIn();
+        allow create:         if isProfessorOrAdmin();
+        allow update, delete: if isSignedIn() && (
+          resource.data.createdBy == request.auth.uid || myRole() == 'admin'
+        );
+
+        match /submissions/{studentId} {
+          allow read:         if isSignedIn() && (
+            request.auth.uid == studentId || isProfessorOrAdmin()
+          );
+          allow create, update: if isSignedIn() && (
+            request.auth.uid == studentId || isProfessorOrAdmin()
+          );
+          allow delete:       if isSignedIn() && myRole() == 'admin';
+        }
+      }
+
+      match /attendance/{attendanceId} {
+        allow read:  if isSignedIn();
+        allow write: if isProfessorOrAdmin();
+      }
+
+      match /announcements/{announcementId} {
+        allow read:           if isSignedIn();
+        allow create:         if isProfessorOrAdmin();
+        allow update, delete: if isSignedIn() && (
+          resource.data.createdBy == request.auth.uid || myRole() == 'admin'
+        );
+      }
+
+      match /messages/{messageId} {
+        allow read:           if isSignedIn();
+        allow create, update: if isSignedIn();
+        allow delete:         if isSignedIn() && myRole() == 'admin';
+      }
+
+      match /meetings/{meetingId} {
+        allow read:  if isSignedIn();
+        allow write: if isProfessorOrAdmin();
+      }
+    }
+
+    // ── QUERIES ───────────────────────────────────────────────────────────
+    match /queries/{queryId} {
+      allow read:   if isSignedIn() && (
+        resource.data.studentId   == request.auth.uid ||
+        resource.data.professorId == request.auth.uid ||
+        myRole() == 'admin'
+      );
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.studentId   == request.auth.uid ||
+        resource.data.professorId == request.auth.uid ||
+        myRole() == 'admin'
+      );
+      allow delete: if isSignedIn() && myRole() == 'admin';
+    }
+
+    // ── NOTIFICATIONS ─────────────────────────────────────────────────────
+    match /notifications/{userId}/items/{notifId} {
+      allow read:  if isSignedIn() && (
+        request.auth.uid == userId || myRole() == 'admin'
+      );
+      allow write: if isSignedIn();
+    }
+  }
+}
