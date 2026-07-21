@@ -159,7 +159,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         lsWrite(sbProfile)
         setUserProfile(sbProfile)
       } else {
-        setUserProfile(null)
+        // Fallback profile creation for new Google users or missing database records
+        const pendingRole = (localStorage.getItem('pending_google_role') as UserRole) || 'student'
+        localStorage.removeItem('pending_google_role')
+        const newProfile: UserProfile = {
+          uid: firebaseUser.uid,
+          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+          email: firebaseUser.email || '',
+          role: pendingRole,
+          photoURL: firebaseUser.photoURL || undefined,
+          joinedClasses: [],
+          createdAt: new Date().toISOString(),
+        }
+        lsWrite(newProfile)
+        sbWriteProfile(newProfile)
+        setUserProfile(newProfile)
       }
       setLoading(false)
     })
@@ -173,23 +187,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // onAuthStateChanged handles profile resolution
   }
 
-  // ── Google sign-in — role lock enforced ──────────────────────────────────
+  // ── Google sign-in ────────────────────────────────────────────────────────
   const signInWithGoogle = async (requestedRole: UserRole = 'student') => {
-    const result = await signInWithPopup(auth, new GoogleAuthProvider())
+    localStorage.setItem('pending_google_role', requestedRole)
+    const provider = new GoogleAuthProvider()
+    provider.setCustomParameters({ prompt: 'select_account' })
+
+    let result
+    try {
+      result = await signInWithPopup(auth, provider)
+    } catch (popupErr: any) {
+      if (popupErr.code === 'auth/popup-blocked' || popupErr.code === 'auth/cancelled-popup-request') {
+        const { signInWithRedirect } = await import('firebase/auth')
+        await signInWithRedirect(auth, provider)
+        return
+      }
+      throw popupErr
+    }
+
     const gUser = result.user
 
-    // Check localStorage first (instant), then Supabase
+    // Check localStorage first, then Supabase
     const existing = lsRead(gUser.uid) ?? await sbReadProfile(gUser.uid)
 
     if (existing) {
-      if (existing.role !== requestedRole) {
-        await fbSignOut(auth)
-        const locked = existing.role.charAt(0).toUpperCase() + existing.role.slice(1)
-        throw new Error(
-          `ROLE_MISMATCH:This Google account is already registered as a ${locked}. ` +
-          `Please select "${locked}" and try again.`
-        )
-      }
       lsWrite(existing)
       sbWriteProfile(existing)
       setUserProfile(existing)

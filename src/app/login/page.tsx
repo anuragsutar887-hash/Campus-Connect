@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase'
 import { doc, getDoc } from 'firebase/firestore'
 import { UserProfile } from '@/lib/types'
 import { toast } from 'sonner'
-import { BookOpen, Mail, Lock, Eye, EyeOff, GraduationCap, Briefcase, ShieldAlert } from 'lucide-react'
+import { BookOpen, Mail, Lock, Eye, EyeOff, GraduationCap, Briefcase } from 'lucide-react'
 
 export default function LoginPage() {
   const { signIn, signInWithGoogle } = useAuth()
@@ -49,16 +49,8 @@ export default function LoginPage() {
       toast.success('Signed in with Google!')
       router.replace('/')
     } catch (err: any) {
-      // Check for our custom ROLE_MISMATCH error
-      if (err.message?.startsWith('ROLE_MISMATCH:')) {
-        const msg = err.message.replace('ROLE_MISMATCH:', '')
-        toast.error(msg, {
-          duration: 6000,
-          icon: '🚫',
-        })
-      } else {
-        toast.error('Google sign-in failed. Try again.')
-      }
+      console.error('[Google Sign-In Error]:', err)
+      toast.error(getFriendlyError(err))
     } finally {
       setGoogleLoading(false)
     }
@@ -129,13 +121,7 @@ export default function LoginPage() {
               Continue with Google
             </button>
 
-            {/* Role mismatch hint */}
-            <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
-              <ShieldAlert className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-amber-400/80">
-                Your Google account is locked to the role you registered with. Selecting the wrong role will be rejected.
-              </p>
-            </div>
+
           </div>
 
           <div className="relative">
@@ -208,13 +194,23 @@ export default function LoginPage() {
   )
 }
 
-function getFriendlyError(code: string): string {
+function getFriendlyError(err: any): string {
+  const code = typeof err === 'string' ? err : err?.code || ''
+  const message = typeof err === 'string' ? '' : err?.message || ''
+
   const map: Record<string, string> = {
     'auth/user-not-found': 'No account found with this email.',
     'auth/wrong-password': 'Incorrect password.',
     'auth/invalid-email': 'Invalid email address.',
     'auth/too-many-requests': 'Too many attempts. Try again later.',
     'auth/invalid-credential': 'Invalid email or password.',
+    'auth/popup-closed-by-user': 'Sign-in window was closed.',
+    'auth/popup-blocked': 'Pop-up blocked by browser. Retrying...',
+    'auth/unauthorized-domain': 'Domain not authorized in Firebase Console. Please add your Vercel URL under Firebase Auth Settings -> Authorized Domains.',
+    'auth/operation-not-allowed': 'Google Sign-In is disabled in Firebase Console.',
   }
-  return map[code] || 'Sign in failed. Please try again.'
+
+  if (map[code]) return map[code]
+  if (message.includes('unauthorized-domain')) return 'Domain not authorized in Firebase Console. Please add your Vercel URL under Firebase Auth Settings -> Authorized Domains.'
+  return message || 'Sign in failed. Please try again.'
 }

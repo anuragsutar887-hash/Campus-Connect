@@ -49,11 +49,11 @@ export default function RegisterPage() {
       toast.success('Signed in with Google!')
       router.replace('/')
     } catch (err: any) {
-      if (err?.message?.startsWith('ROLE_MISMATCH:')) {
-        toast.error(err.message.replace('ROLE_MISMATCH:', ''), { duration: 6000, icon: '🚫' })
-      } else {
-        toast.error('Google sign-in failed. Please try again.')
-      }
+      console.error('[Google Sign-In Error]:', err)
+      const msg = err?.code === 'auth/unauthorized-domain'
+        ? 'Domain not authorized in Firebase Console. Please add your Vercel URL under Firebase Auth Settings -> Authorized Domains.'
+        : err?.message || 'Google sign-in failed. Please try again.'
+      toast.error(msg)
     } finally {
       setGoogleLoading(false)
     }
