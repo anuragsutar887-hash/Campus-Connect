@@ -2,8 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import { db } from '@/lib/firebase'
-import { doc, getDoc } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 import { ClassWorkspace, UserProfile } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 import {
@@ -23,20 +22,62 @@ export default function StudentClassWorkspacePage() {
     if (!classId) return
     async function load() {
       try {
-        const snap = await getDoc(doc(db, 'classes', classId as string))
-        if (!snap.exists()) {
+        // Fetch class from Supabase
+        const { data: classRow, error: classErr } = await supabase
+          .from('classes')
+          .select('*')
+          .eq('id', classId)
+          .single()
+
+        if (classErr || !classRow) {
           router.replace('/dashboard/student/classes')
           return
         }
-        const classData = { id: snap.id, ...snap.data() } as ClassWorkspace
+
+        const classData: ClassWorkspace = {
+          id:            classRow.id,
+          subject:       classRow.subject,
+          name:          classRow.name,
+          department:    classRow.department,
+          year:          classRow.year,
+          division:      classRow.division,
+          semester:      classRow.semester,
+          college:       classRow.college,
+          professorId:   classRow.professor_id,
+          professorName: classRow.professor_name,
+          joinCode:      classRow.join_code,
+          students:      classRow.students ?? [],
+          createdAt:     classRow.created_at,
+        }
         setCls(classData)
-        // Parallel fetch all classmate profiles
-        const classmatesDocs = await Promise.all(
-          (classData.students || []).map(uid => getDoc(doc(db, 'users', uid)))
-        )
-        setClassmates(classmatesDocs.filter(d => d.exists()).map(d => d.data() as UserProfile))
+
+        // Fetch enrolled classmates from Supabase users table
+        const studentUids: string[] = classRow.students ?? []
+        if (studentUids.length > 0) {
+          const { data: userRows } = await supabase
+            .from('users')
+            .select('*')
+            .in('uid', studentUids)
+
+          if (userRows) {
+            const list = userRows.map(r => ({
+              uid:         r.uid,
+              name:        r.name,
+              email:       r.email,
+              role:        r.role,
+              college:     r.college,
+              department:  r.department,
+              rollNumber:  r.roll_number,
+              employeeId:  r.employee_id,
+              photoURL:    r.photo_url,
+              joinedClasses: r.joined_classes ?? [],
+              createdAt:   r.created_at,
+            })) as UserProfile[]
+            setClassmates(list)
+          }
+        }
       } catch (err) {
-        console.error(err)
+        console.error('Error loading class data:', err)
       } finally {
         setLoading(false)
       }
@@ -55,7 +96,7 @@ export default function StudentClassWorkspacePage() {
   ]
 
   if (loading) return (
-    <DashboardLayout>
+    <DashboardLayout title="Class Workspace">
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
       </div>
@@ -81,7 +122,7 @@ export default function StudentClassWorkspacePage() {
         <div className="glass-card p-4 flex flex-wrap items-center gap-4 text-sm">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-muted-foreground" />
-            <span className="text-foreground"><strong>{cls?.students?.length || 0}</strong> classmates</span>
+            <span className="text-foreground"><strong>{cls?.students?.length || 0}</strong> classmates enrolled</span>
           </div>
           <div className="flex items-center gap-2">
             <GraduationCap className="w-4 h-4 text-muted-foreground" />
@@ -110,10 +151,12 @@ export default function StudentClassWorkspacePage() {
 
         {/* Classmates list */}
         <div>
-          <h2 className="section-title mb-4">Classmates ({classmates.length})</h2>
+          <h2 className="section-title mb-4">Classmates ({cls?.students?.length || 0})</h2>
           {classmates.length === 0 ? (
             <div className="glass-card p-8 text-center text-muted-foreground text-sm">
-              No other classmates are registered in this class.
+              {cls?.students?.length ?? 0 > 0
+                ? 'Classmates enrolled, loading profile roster...'
+                : 'No other classmates are registered in this class yet.'}
             </div>
           ) : (
             <div className="glass-card overflow-hidden">

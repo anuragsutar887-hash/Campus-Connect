@@ -68,13 +68,17 @@ export default function StudentClassesPage() {
     }
 
     // Add student to class
-    const updatedStudents = [...existingStudents, uid]
+    const updatedStudents = Array.from(new Set([...existingStudents, uid]))
     const { error: updateErr } = await supabase
       .from('classes').update({ students: updatedStudents }).eq('id', found.id)
 
     if (updateErr) {
       toast.error('Failed to join class')
     } else {
+      // Also sync user's joined_classes in Supabase users table
+      const userJoined = Array.from(new Set([...(userProfile.joinedClasses || []), found.id]))
+      await supabase.from('users').update({ joined_classes: userJoined }).eq('uid', uid)
+
       const enrolledClass = {
         id: found.id, subject: found.subject, name: found.name,
         department: found.department, year: found.year, division: found.division,
@@ -82,7 +86,7 @@ export default function StudentClassesPage() {
         professorId: found.professor_id, professorName: found.professor_name,
         joinCode: found.join_code, students: updatedStudents, createdAt: found.created_at,
       } as ClassWorkspace
-      
+
       setClasses(prev => [enrolledClass, ...prev])
       toast.success(`Successfully enrolled in ${found.subject}!`)
       setShowJoin(false)
