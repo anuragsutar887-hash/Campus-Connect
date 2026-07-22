@@ -159,8 +159,14 @@ function ProfessorAssignmentsPageContent() {
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!activeAssignment || !reviewingStudent) return
-    setSubmittingReview(true)
     const marksVal = Number(reviewForm.marks)
+
+    if (isNaN(marksVal) || marksVal < 0 || marksVal > 10) {
+      toast.error('Marks must be between 0 and 10')
+      return
+    }
+
+    setSubmittingReview(true)
 
     const res = await fetch('/api/db', {
       method: 'POST',
@@ -290,7 +296,7 @@ function ProfessorAssignmentsPageContent() {
                               <>
                                 <div className="text-right">
                                   {sub.status === 'reviewed'
-                                    ? <span className="badge badge-green text-xs">Reviewed ({sub.marks} marks)</span>
+                                    ? <span className="badge badge-green text-xs">Reviewed ({sub.marks}/10 marks)</span>
                                     : sub.status === 'late'
                                     ? <span className="badge badge-yellow text-xs">Late Submit</span>
                                     : <span className="badge badge-blue text-xs">Submitted</span>}
@@ -367,8 +373,21 @@ function ProfessorAssignmentsPageContent() {
             </div>
             <form onSubmit={handleReviewSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium">Marks *</label>
-                <input type="number" value={reviewForm.marks} onChange={e => setReviewForm(p => ({...p, marks: e.target.value}))} placeholder="e.g. 90" required min={0} className="input-field" />
+                <label className="text-sm font-medium flex justify-between">
+                  <span>Marks (Out of 10) *</span>
+                  <span className="text-xs text-muted-foreground font-mono">0 - 10</span>
+                </label>
+                <input
+                  type="number"
+                  value={reviewForm.marks}
+                  onChange={e => setReviewForm(p => ({...p, marks: e.target.value}))}
+                  placeholder="e.g. 8.5"
+                  required
+                  min={0}
+                  max={10}
+                  step="0.5"
+                  className="input-field"
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Remarks</label>

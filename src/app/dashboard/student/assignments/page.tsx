@@ -254,7 +254,7 @@ function StudentAssignmentsPageContent() {
                             <div className="flex items-center justify-between">
                               <span className="text-xs font-semibold text-foreground">Score Awarded:</span>
                               <span className="text-sm font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
-                                {sub.marks} Marks
+                                {sub.marks} / 10 Marks
                               </span>
                             </div>
                             {sub.remarks && (
