@@ -388,19 +388,7 @@ export default function ProfessorDashboardPage() {
           )}
         </div>
 
-        {/* ── Students Overview ─────────────────────────────────────────── */}
-        {!noData && (
-          <div className="glass-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-0.5">
-              <p className="text-sm font-semibold text-foreground">Total Students Under Your Supervision</p>
-              <p className="text-xs text-muted-foreground">Across {classes.length} class{classes.length !== 1 ? 'es' : ''}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-3xl font-bold gradient-text">{totalStudents}</span>
-              <span className="text-sm text-muted-foreground">students</span>
-            </div>
-          </div>
-        )}
+
 
       </div>
     </DashboardLayout>
