@@ -156,19 +156,29 @@ function ProfessorAssignmentsPageContent() {
     setLoadingSubmissions(false)
   }
 
-  // ── Grade submission ─────────────────────────────────────────────────────────
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!activeAssignment || !reviewingStudent) return
     setSubmittingReview(true)
     const marksVal = Number(reviewForm.marks)
 
-    const { error } = await supabase.from('submissions')
-      .update({ marks: marksVal, remarks: reviewForm.remarks, status: 'reviewed' })
-      .eq('assignment_id', activeAssignment.id)
-      .eq('student_id', reviewingStudent.studentId)
+    const res = await fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        table: 'submissions',
+        method: 'update',
+        data: { marks: marksVal, remarks: reviewForm.remarks, status: 'reviewed' },
+        filters: [
+          { col: 'assignment_id', val: activeAssignment.id },
+          { col: 'student_id', val: reviewingStudent.studentId },
+        ]
+      })
+    })
 
-    if (error) {
+    const json = await res.json()
+
+    if (!res.ok || json.error) {
       toast.error('Failed to save grade')
     } else {
       setSubmissions(prev => prev.map(s =>
@@ -176,7 +186,7 @@ function ProfessorAssignmentsPageContent() {
           ? { ...s, marks: marksVal, remarks: reviewForm.remarks, status: 'reviewed' }
           : s
       ))
-      toast.success('Grade saved!')
+      toast.success('Grade saved successfully!')
       setReviewingStudent(null)
       setReviewForm({ marks: '', remarks: '' })
     }

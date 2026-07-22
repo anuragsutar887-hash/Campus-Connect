@@ -136,18 +136,28 @@ function StudentAssignmentsPageContent() {
     setUploadProgress(70)
     const passed = isDeadlinePassed(activeAssignment.dueDate)
 
-    const { error: subErr } = await supabase.from('submissions').upsert([{
-      assignment_id: activeAssignment.id,
-      student_id:    userProfile.uid,
-      student_name:  userProfile.name,
-      file_url:      fileUrl,
-      file_name:     selectedFile.name,
-      comment:       comment || '',
-      status:        passed ? 'late' : 'submitted',
-    }])
+    const res = await fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        table: 'submissions',
+        method: 'upsert',
+        data: [{
+          assignment_id: activeAssignment.id,
+          student_id:    userProfile.uid,
+          student_name:  userProfile.name,
+          file_url:      fileUrl,
+          file_name:     selectedFile.name,
+          comment:       comment || '',
+          status:        passed ? 'late' : 'submitted',
+        }]
+      })
+    })
 
+    const json = await res.json()
     setUploadProgress(100)
-    if (subErr) {
+
+    if (!res.ok || json.error) {
       toast.error('Failed to record submission')
     } else {
       setSubmissions(prev => ({
@@ -232,20 +242,32 @@ function StudentAssignmentsPageContent() {
                   </div>
                   <div className="flex items-center gap-4 flex-shrink-0">
                     {sub ? (
-                      <div className="glass-card bg-muted/40 p-4 border border-border/40 rounded-xl space-y-2 w-full md:w-64">
+                      <div className="glass-card bg-muted/40 p-4 border border-border/40 rounded-xl space-y-2.5 w-full md:w-72">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">Your Submission:</span>
-                          <a href={sub.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-400 hover:underline flex items-center gap-1">
-                            File <Download className="w-3 h-3" />
+                          <span className="text-xs font-medium text-muted-foreground">Your Submission</span>
+                          <a href={sub.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-400 hover:underline flex items-center gap-1 font-semibold">
+                            View File <Download className="w-3 h-3" />
                           </a>
                         </div>
                         {sub.status === 'reviewed' ? (
-                          <div className="pt-1.5 border-t border-border/50">
-                            <p className="text-xs text-foreground font-semibold">Marks: <span className="text-emerald-400 font-bold">{sub.marks}</span></p>
-                            {sub.remarks && <p className="text-xxs text-muted-foreground mt-1">Feedback: &ldquo;{sub.remarks}&rdquo;</p>}
+                          <div className="pt-2 border-t border-border/60 space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-semibold text-foreground">Score Awarded:</span>
+                              <span className="text-sm font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
+                                {sub.marks} Marks
+                              </span>
+                            </div>
+                            {sub.remarks && (
+                              <p className="text-xs text-muted-foreground italic bg-secondary/40 p-2 rounded-lg mt-1.5 border border-border/30">
+                                &ldquo;{sub.remarks}&rdquo;
+                              </p>
+                            )}
                           </div>
                         ) : (
-                          <p className="text-xxs text-muted-foreground italic">Awaiting grading...</p>
+                          <div className="pt-1.5 border-t border-border/50 flex items-center gap-1.5 text-xs text-yellow-400 font-medium">
+                            <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+                            <span>Submitted · Awaiting grading</span>
+                          </div>
                         )}
                       </div>
                     ) : (

@@ -127,7 +127,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
           {nav.map((item) => {
             const Icon = item.icon
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+            const isDashboardRoot = item.href === '/dashboard/professor' || item.href === '/dashboard/student' || item.href === '/dashboard/admin'
+            const isActive = isDashboardRoot
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(item.href + '/')
             return (
               <Link
                 key={item.href}
