@@ -9,7 +9,7 @@ import { ClassWorkspace, Assignment, Submission, UserProfile } from '@/lib/types
 import { formatDate, formatDateTime, isDeadlinePassed } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
-  ClipboardList, Plus, X, Loader2, FileText, Download
+  ClipboardList, Plus, X, Loader2, FileText, Download, Trash2
 } from 'lucide-react'
 
 function ProfessorAssignmentsPageContent() {
@@ -130,6 +130,24 @@ function ProfessorAssignmentsPageContent() {
     setCreating(false)
   }
 
+  // ── Delete assignment ─────────────────────────────────────────────────────
+  const handleDeleteAssignment = async (asg: Assignment) => {
+    if (!confirm(`Delete "${asg.title}"? This cannot be undone and all submissions will be removed.`)) return
+    try {
+      // Delete all submissions first
+      await supabase.from('submissions').delete().eq('assignment_id', asg.id)
+      // Delete the assignment
+      const { error } = await supabase.from('assignments').delete().eq('id', asg.id)
+      if (error) throw error
+      setAssignments(prev => prev.filter(a => a.id !== asg.id))
+      if (activeAssignment?.id === asg.id) setActiveAssignment(null)
+      toast.success(`Assignment "${asg.title}" deleted`)
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to delete assignment')
+    }
+  }
+
   // ── View submissions for an assignment ───────────────────────────────────────
   const viewSubmissions = async (assignment: Assignment) => {
     setActiveAssignment(assignment)
@@ -243,9 +261,18 @@ function ProfessorAssignmentsPageContent() {
                   return (
                     <button key={asg.id} onClick={() => viewSubmissions(asg)}
                       className={`w-full text-left glass-card p-4 space-y-2 transition-all block border ${isSelected ? 'border-brand-500/60 bg-brand-500/5' : 'hover:border-white/10'}`}>
-                      <div className="flex items-start justify-between">
-                        <h3 className="font-semibold text-foreground text-sm truncate pr-2">{asg.title}</h3>
-                        <span className={`badge text-xxs ${passed ? 'badge-red' : 'badge-green'}`}>{passed ? 'Closed' : 'Active'}</span>
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-semibold text-foreground text-sm truncate">{asg.title}</h3>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <span className={`badge text-xxs ${passed ? 'badge-red' : 'badge-green'}`}>{passed ? 'Closed' : 'Active'}</span>
+                          <button
+                            onClick={e => { e.stopPropagation(); handleDeleteAssignment(asg) }}
+                            className="p-1 rounded text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                            title="Delete assignment"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                       <p className="text-xs text-muted-foreground line-clamp-2">{asg.instructions}</p>
                       <div className="text-xxs text-muted-foreground pt-1 border-t border-white/5 flex justify-between">
