@@ -20,8 +20,11 @@ export const metadata: Metadata = {
   keywords: 'campus, academic, classroom, assignments, attendance, notes, college',
   authors: [{ name: 'Campus Connect' }],
   icons: {
-    icon: '/logo.jpg',
-    shortcut: '/logo.jpg',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/logo.jpg', sizes: '192x192' },
+    ],
+    shortcut: '/favicon.svg',
     apple: '/logo.jpg',
   },
   openGraph: {

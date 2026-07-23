@@ -183,7 +183,8 @@ export default function StudentDashboardPage() {
                   const days = daysUntilDeadline(a.dueDate)
                   const passed = isDeadlinePassed(a.dueDate)
                   return (
-                    <div key={a.id} className="glass-card p-4 flex items-center gap-4 hover:border-brand-500/20 transition-all">
+                    <Link key={a.id} href={`/dashboard/student/assignments?classId=${a.classId}`}
+                      className="glass-card p-4 flex items-center gap-4 hover:border-brand-500/20 transition-all block cursor-pointer">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${passed ? 'bg-red-500/15' : days <= 2 ? 'bg-yellow-500/15' : 'bg-brand-500/15'}`}>
                         <ClipboardList className={`w-5 h-5 ${passed ? 'text-red-400' : days <= 2 ? 'text-yellow-400' : 'text-brand-400'}`} />
                       </div>
@@ -197,7 +198,7 @@ export default function StudentDashboardPage() {
                         </span>
                         <p className="text-xs text-muted-foreground mt-1">{formatDate(a.dueDate)}</p>
                       </div>
-                    </div>
+                    </Link>
                   )
                 })}
               </div>
@@ -218,12 +219,13 @@ export default function StudentDashboardPage() {
             ) : (
               <div className="space-y-3">
                 {announcements.map(ann => (
-                  <div key={ann.id} className="announcement-card">
+                  <Link key={ann.id} href={`/dashboard/student/announcements?classId=${ann.classId}`}
+                    className="announcement-card block cursor-pointer hover:border-brand-500/20 transition-all">
                     {ann.pinned && <span className="badge badge-blue text-xs mb-1">📌 Pinned</span>}
                     <p className="text-sm font-semibold text-foreground">{ann.title}</p>
                     <p className="text-xs text-muted-foreground line-clamp-2">{ann.body}</p>
                     <p className="text-xs text-muted-foreground">{ann.createdByName} · {timeAgo(ann.createdAt)}</p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

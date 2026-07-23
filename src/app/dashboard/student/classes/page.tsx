@@ -134,7 +134,7 @@ export default function StudentClassesPage() {
                   <h3 className="font-semibold text-foreground truncate">{cls.subject}</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">Prof. {cls.professorName}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{cls.department} · {cls.year}</p>
-                  <p className="text-xs text-muted-foreground">Sem {cls.semester} · Div {cls.division}</p>
+                  <p className="text-xs text-muted-foreground">Sem {cls.semester.replace('Semester ', '')} · Div {cls.division}</p>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-border">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

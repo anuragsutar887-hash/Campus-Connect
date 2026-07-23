@@ -29,8 +29,8 @@ function AttendanceSkeleton() {
             <div className="shimmer h-10 w-24 rounded-lg" />
             <div className="shimmer h-2 w-full rounded-full" />
           </div>
-          <div className="glass-card p-5 md:col-span-2 grid grid-cols-4 gap-4">
-            {[1,2,3,4].map(i => (
+          <div className="glass-card p-5 md:col-span-2 grid grid-cols-2 gap-4">
+            {[1,2].map(i => (
               <div key={i} className="p-4 rounded-xl bg-muted/30 space-y-2">
                 <div className="shimmer h-3 w-12 mx-auto rounded-lg" />
                 <div className="shimmer h-7 w-8 mx-auto rounded-lg" />
@@ -171,12 +171,10 @@ function StudentAttendancePageContent() {
                   <div className={`h-full ${stats.pct >= 75 ? 'bg-emerald-500' : 'bg-red-500'}`} style={{ width: `${stats.pct}%` }} />
                 </div>
               </div>
-              <div className="glass-card p-5 md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="glass-card p-5 md:col-span-2 grid grid-cols-2 gap-4">
                 {[
                   { label: 'Present', value: stats.present, color: 'text-emerald-400' },
                   { label: 'Absent',  value: stats.absent,  color: 'text-red-400' },
-                  { label: 'Late',    value: stats.late,    color: 'text-yellow-400' },
-                  { label: 'Excused', value: stats.excused, color: 'text-blue-400' },
                 ].map(({ label, value, color }) => (
                   <div key={label} className="p-4 rounded-xl bg-muted/40 border border-border/30 flex flex-col justify-center text-center">
                     <span className="text-xs font-medium text-muted-foreground">{label}</span>

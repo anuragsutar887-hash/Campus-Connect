@@ -87,6 +87,7 @@ export interface AttendanceRecord {
 
 export interface Announcement {
   id: string
+  classId: string
   title: string
   body: string
   attachmentUrl?: string
