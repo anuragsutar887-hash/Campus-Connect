@@ -296,7 +296,7 @@ export default function ProfessorDashboardPage() {
                           {cls.subject}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                          Div {cls.division} · Year {cls.year} · Sem {cls.semester}
+                          Div: {cls.division} &nbsp;·&nbsp; Sem: {cls.semester.replace('Semester ', '')}
                         </p>
                       </div>
                     </div>

@@ -99,7 +99,7 @@ function JoinCodeModal({
 
         {/* Class info summary */}
         <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t border-border">
-          <p>{classData.department} · {classData.year} · Division {classData.division} · Sem {classData.semester}</p>
+          <p>{classData.department} &nbsp;·&nbsp; Div: {classData.division} &nbsp;·&nbsp; Sem: {classData.semester.replace('Semester ', '')}</p>
           {classData.college && <p>{classData.college}</p>}
         </div>
 
@@ -338,9 +338,8 @@ export default function ProfessorClassesPage() {
                 <div>
                   <h3 className="font-semibold text-foreground">{cls.subject}</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {cls.department} · {cls.year} · Div {cls.division}
+                    {cls.department} &nbsp;·&nbsp; Div: {cls.division} &nbsp;·&nbsp; Sem: {cls.semester.replace('Semester ', '')}
                   </p>
-                  <p className="text-xs text-muted-foreground">Semester {cls.semester}</p>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-border">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
