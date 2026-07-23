@@ -6,10 +6,8 @@ import { getInitials } from '@/lib/utils'
 import {
   BookOpen, LayoutDashboard, Users, FileText, ClipboardList,
   CalendarCheck, Megaphone, MessageCircle, HelpCircle, Video,
-  LogOut, Shield, GraduationCap, Briefcase, X
+  Shield, GraduationCap, Briefcase, X
 } from 'lucide-react'
-import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
 
 const studentNav = [
   { label: 'Dashboard',        href: '/dashboard/student',               icon: LayoutDashboard },
@@ -47,9 +45,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
-  const { userProfile, logOut } = useAuth()
+  const { userProfile } = useAuth()
   const pathname = usePathname()
-  const router = useRouter()
 
   const nav =
     userProfile?.role === 'professor'
@@ -63,12 +60,6 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     userProfile?.role === 'admin' ? Shield : GraduationCap
 
   const RoleIcon = roleIcon
-
-  const handleLogout = async () => {
-    await logOut()
-    toast.success('Signed out')
-    router.replace('/login')
-  }
 
   return (
     <>
@@ -144,17 +135,6 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             )
           })}
         </nav>
-
-        {/* Bottom actions */}
-        <div className="p-3 border-t border-border">
-          <button
-            onClick={handleLogout}
-            className="nav-item w-full text-red-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 dark:text-red-400"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
-          </button>
-        </div>
       </aside>
     </>
   )

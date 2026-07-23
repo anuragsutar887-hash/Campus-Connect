@@ -123,7 +123,7 @@ export default function ProfessorClassesPage() {
   const [creating, setCreating]         = useState(false)
   const [newClass, setNewClass]         = useState<ClassWorkspace | null>(null) // triggers success modal
   const [form, setForm] = useState({
-    subject: '', department: '', year: '', division: '', semester: '', college: ''
+    subject: '', branch: '', year: '', division: '', semester: '', college: ''
   })
 
   // ── Fetch professor's classes ───────────────────────────────────────────────
@@ -155,7 +155,7 @@ export default function ProfessorClassesPage() {
       const row = {
         subject:        form.subject.trim(),
         name:           `${form.division.trim()} - ${form.subject.trim()}`,
-        department:     form.department.trim(),
+        department:     form.branch.trim(),
         year:           form.year,
         division:       form.division.trim(),
         semester:       form.semester,
@@ -177,7 +177,7 @@ export default function ProfessorClassesPage() {
       const created = rowToClass(data)
       setClasses(prev => [created, ...prev])
       setShowCreate(false)
-      setForm({ subject: '', department: '', year: '', division: '', semester: '', college: '' })
+      setForm({ subject: '', branch: '', year: '', division: '', semester: '', college: '' })
 
       // Show the join code success modal
       setNewClass(created)
@@ -307,10 +307,10 @@ export default function ProfessorClassesPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Department *</label>
+                  <label className="text-sm font-medium">Branch / Department *</label>
                   <input
-                    value={form.department}
-                    onChange={e => setForm(p => ({ ...p, department: e.target.value }))}
+                    value={form.branch}
+                    onChange={e => setForm(p => ({ ...p, branch: e.target.value }))}
                     placeholder="e.g. Computer Engg."
                     required
                     className="input-field"
