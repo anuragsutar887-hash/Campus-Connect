@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
-import { BookOpen } from 'lucide-react'
 
 export default function HomePage() {
   const { user, userProfile, loading } = useAuth()
@@ -46,12 +45,11 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-5 animate-fade-in">
-        <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
-          style={{ background: 'linear-gradient(135deg, hsl(239 84% 60%), hsl(239 84% 45%))' }}
-        >
-          <BookOpen className="w-7 h-7 text-white" />
-        </div>
+        <img
+          src="/logo.jpg"
+          alt="Campus Connect"
+          className="w-14 h-14 rounded-2xl object-cover shadow-lg"
+        />
         <div className="flex flex-col items-center gap-2">
           <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
           <p className="text-muted-foreground text-sm">Loading Campus Connect…</p>

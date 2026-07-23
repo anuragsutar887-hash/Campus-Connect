@@ -19,10 +19,16 @@ export const metadata: Metadata = {
   description: 'A professional academic workspace for students and professors to manage class communication, attendance, assignments, notes, meetings, and resources in one place.',
   keywords: 'campus, academic, classroom, assignments, attendance, notes, college',
   authors: [{ name: 'Campus Connect' }],
+  icons: {
+    icon: '/logo.jpg',
+    shortcut: '/logo.jpg',
+    apple: '/logo.jpg',
+  },
   openGraph: {
     title: 'Campus Connect',
     description: 'One class. One workspace. Everything connected.',
     type: 'website',
+    images: ['/logo.jpg'],
   },
 }
 

@@ -82,12 +82,11 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         {/* Logo */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <Link href="/" className="flex items-center gap-2.5">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, hsl(239 84% 60%), hsl(239 84% 45%))' }}
-            >
-              <BookOpen className="w-4 h-4 text-white" />
-            </div>
+            <img
+              src="/logo.jpg"
+              alt="Campus Connect"
+              className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+            />
             <span className="font-bold text-foreground text-sm tracking-tight">Campus Connect</span>
           </Link>
           <button onClick={onClose} className="lg:hidden text-muted-foreground hover:text-foreground p-1 rounded transition-colors">

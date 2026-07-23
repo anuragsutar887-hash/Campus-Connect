@@ -67,8 +67,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md animate-fade-in">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4" style={{ background: 'linear-gradient(135deg, hsl(239 84% 60%), hsl(239 84% 45%))' }}>
-            <BookOpen className="w-7 h-7 text-white" />
+          <div className="inline-flex items-center justify-center mb-4">
+            <img src="/logo.jpg" alt="Campus Connect" className="w-16 h-16 rounded-2xl object-cover shadow-lg" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">Campus Connect</h1>
           <p className="text-muted-foreground text-sm mt-1">Your College Classroom, Connected.</p>
