@@ -13,6 +13,15 @@ import {
 import { getInitials, timeAgo, formatDate } from '@/lib/utils'
 import { StatCardSkeleton, RowSkeleton } from '@/components/ui/Skeleton'
 
+// ── Time-based greeting ────────────────────────────────────────────────────────
+function getGreeting(): { text: string; emoji: string } {
+  const hour = new Date().getHours()
+  if (hour >= 5 && hour < 12)  return { text: 'Good Morning',   emoji: '🌅' }
+  if (hour >= 12 && hour < 17) return { text: 'Good Afternoon', emoji: '☀️' }
+  if (hour >= 17 && hour < 21) return { text: 'Good Evening',   emoji: '🌆' }
+  return { text: 'Good Night', emoji: '🌙' }
+}
+
 // ── Skeleton for the professor dashboard ─────────────────────────────────────
 function DashboardSkeleton() {
   return (
@@ -191,8 +200,9 @@ export default function ProfessorDashboardPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground tracking-tight">
-              Welcome back,{' '}
-              <span className="gradient-text">Prof. {userProfile?.name?.split(' ')[0]}</span> 👋
+              {getGreeting().text},{' '}
+              <span className="gradient-text">Prof. {userProfile?.name?.split(' ')[0]}</span>{' '}
+              {getGreeting().emoji}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}

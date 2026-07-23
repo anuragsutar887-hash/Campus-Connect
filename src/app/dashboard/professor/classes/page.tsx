@@ -8,7 +8,7 @@ import { generateClassCode } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
   BookOpen, Plus, Users, Key, ChevronRight, X,
-  Loader2, Copy, Check, Share2
+  Loader2, Copy, Check, Share2, LogIn
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -122,27 +122,55 @@ export default function ProfessorClassesPage() {
   const [showCreate, setShowCreate]     = useState(false)
   const [creating, setCreating]         = useState(false)
   const [newClass, setNewClass]         = useState<ClassWorkspace | null>(null) // triggers success modal
+  const [showJoin, setShowJoin]         = useState(false)
+  const [joining, setJoining]           = useState(false)
+  const [joinCode, setJoinCode]         = useState('')
   const [form, setForm] = useState({
     subject: '', branch: '', year: '', division: '', semester: '', college: ''
   })
 
-  // ── Fetch professor's classes ───────────────────────────────────────────────
+  // ── Fetch professor's own + joined classes ─────────────────────────────────
   useEffect(() => {
     if (!userProfile?.uid) return
-    supabase
-      .from('classes')
-      .select('*')
-      .eq('professor_id', userProfile.uid)
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error('[Classes] fetch error:', error.message)
-          toast.error('Failed to load classes')
-        } else {
-          setClasses((data ?? []).map(rowToClass))
-        }
+
+    async function loadClasses() {
+      // Fetch classes the professor created
+      const { data: ownData, error: ownErr } = await supabase
+        .from('classes')
+        .select('*')
+        .eq('professor_id', userProfile!.uid)
+        .order('created_at', { ascending: false })
+
+      if (ownErr) {
+        console.error('[Classes] fetch error:', ownErr.message)
+        toast.error('Failed to load classes')
         setLoading(false)
-      })
+        return
+      }
+
+      // Fetch classes the professor has joined (they appear in students array)
+      const { data: joinedData } = await supabase
+        .from('classes')
+        .select('*')
+        .contains('students', [userProfile!.uid])
+        .neq('professor_id', userProfile!.uid)
+        .order('created_at', { ascending: false })
+
+      const ownClasses = (ownData ?? []).map(rowToClass)
+      const joinedClasses = (joinedData ?? []).map(rowToClass)
+
+      // Merge: own classes first, then joined — no duplicates
+      const allIds = new Set(ownClasses.map(c => c.id))
+      const merged = [...ownClasses]
+      for (const c of joinedClasses) {
+        if (!allIds.has(c.id)) merged.push(c)
+      }
+
+      setClasses(merged)
+      setLoading(false)
+    }
+
+    loadClasses()
   }, [userProfile])
 
   // ── Create class handler ────────────────────────────────────────────────────
@@ -190,6 +218,61 @@ export default function ProfessorClassesPage() {
     }
   }
 
+  // ── Join another professor's class ─────────────────────────────────────────
+  const handleJoin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!userProfile?.uid) return
+    const code = joinCode.trim().toUpperCase()
+    if (!code) return
+    setJoining(true)
+
+    try {
+      // Find class by join code
+      const { data: found, error: findErr } = await supabase
+        .from('classes').select('*').eq('join_code', code).single()
+
+      if (findErr || !found) {
+        toast.error('Invalid join code — class not found')
+        setJoining(false)
+        return
+      }
+
+      // Check if professor owns this class
+      if (found.professor_id === userProfile.uid) {
+        toast.error('You are already the owner of this class')
+        setJoining(false)
+        return
+      }
+
+      const existingStudents: string[] = found.students ?? []
+      if (existingStudents.includes(userProfile.uid)) {
+        toast.error('You have already joined this class')
+        setJoining(false)
+        return
+      }
+
+      // Add professor to students array
+      const updatedStudents = [...existingStudents, userProfile.uid]
+      const { error: updateErr } = await supabase
+        .from('classes').update({ students: updatedStudents }).eq('id', found.id)
+
+      if (updateErr) {
+        toast.error('Failed to join class')
+      } else {
+        const joinedClass = rowToClass({ ...found, students: updatedStudents })
+        setClasses(prev => [...prev, joinedClass])
+        toast.success(`Successfully joined ${found.subject}!`)
+        setShowJoin(false)
+        setJoinCode('')
+      }
+    } catch (err: any) {
+      console.error('[Classes] join error:', err)
+      toast.error(err?.message || 'Failed to join class')
+    } finally {
+      setJoining(false)
+    }
+  }
+
   return (
     <DashboardLayout title="My Classes">
       <div className="space-y-6 animate-fade-in">
@@ -202,13 +285,22 @@ export default function ProfessorClassesPage() {
               {classes.length} active class{classes.length !== 1 ? 'es' : ''}
             </p>
           </div>
-          <button
-            id="create-class-modal-btn"
-            onClick={() => setShowCreate(true)}
-            className="btn-primary"
-          >
-            <Plus className="w-4 h-4" /> Create Class
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              id="join-class-modal-btn"
+              onClick={() => setShowJoin(true)}
+              className="btn-secondary"
+            >
+              <LogIn className="w-4 h-4" /> Join Class
+            </button>
+            <button
+              id="create-class-modal-btn"
+              onClick={() => setShowCreate(true)}
+              className="btn-primary"
+            >
+              <Plus className="w-4 h-4" /> Create Class
+            </button>
+          </div>
         </div>
 
         {/* Class list */}
@@ -395,6 +487,44 @@ export default function ProfessorClassesPage() {
           classData={newClass}
           onClose={() => setNewClass(null)}
         />
+      )}
+
+      {/* ── Join Class Modal ────────────────────────────────────────────────── */}
+      {showJoin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="glass-card w-full max-w-md p-6 space-y-5 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Join Another Professor's Class</h2>
+              <button onClick={() => setShowJoin(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Enter the join code shared by another professor to access their class as a co-professor.
+            </p>
+            <form onSubmit={handleJoin} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium flex items-center gap-1">
+                  <Key className="w-4 h-4 text-brand-400" /> Join Code *
+                </label>
+                <input
+                  value={joinCode}
+                  onChange={e => setJoinCode(e.target.value.toUpperCase())}
+                  placeholder="Enter 6-character class code"
+                  required
+                  className="input-field font-mono text-center text-lg uppercase tracking-widest"
+                  maxLength={6}
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowJoin(false)} className="btn-ghost flex-1">Cancel</button>
+                <button type="submit" disabled={joining} className="btn-primary flex-1">
+                  {joining ? <Loader2 className="w-4 h-4 animate-spin" /> : <><LogIn className="w-4 h-4" /> Join Class</>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </DashboardLayout>
   )
