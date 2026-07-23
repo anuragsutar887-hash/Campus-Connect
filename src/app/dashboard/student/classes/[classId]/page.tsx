@@ -171,7 +171,6 @@ export default function StudentClassWorkspacePage() {
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground">#</th>
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground">Name</th>
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground">Roll No.</th>
-                    <th className="text-left p-4 text-xs font-medium text-muted-foreground">Branch</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -180,7 +179,6 @@ export default function StudentClassWorkspacePage() {
                       <td className="p-4 text-muted-foreground">{i + 1}</td>
                       <td className="p-4 font-medium text-foreground">{s.name}</td>
                       <td className="p-4 text-muted-foreground text-xs">{s.rollNumber || '—'}</td>
-                      <td className="p-4 text-muted-foreground text-xs">{s.department || cls?.department}</td>
                     </tr>
                   ))}
                 </tbody>

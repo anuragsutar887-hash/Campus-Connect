@@ -150,7 +150,7 @@ export default function EditProfilePage() {
               <input
                 value={form.college}
                 onChange={e => setForm(p => ({ ...p, college: e.target.value }))}
-                placeholder="e.g. ICEM"
+                placeholder="Enter your college name"
                 className="input-field"
               />
             </div>
@@ -163,7 +163,7 @@ export default function EditProfilePage() {
               <input
                 value={form.department}
                 onChange={e => setForm(p => ({ ...p, department: e.target.value }))}
-                placeholder="e.g. Computer Engineering"
+                placeholder="Enter your department or branch"
                 className="input-field"
               />
             </div>
@@ -177,7 +177,7 @@ export default function EditProfilePage() {
                 <input
                   value={form.rollNumber}
                   onChange={e => setForm(p => ({ ...p, rollNumber: e.target.value }))}
-                  placeholder="e.g. 22CS101"
+                  placeholder="Enter your roll number"
                   className="input-field"
                 />
               </div>
@@ -192,7 +192,7 @@ export default function EditProfilePage() {
                 <input
                   value={form.employeeId}
                   onChange={e => setForm(p => ({ ...p, employeeId: e.target.value }))}
-                  placeholder="e.g. EMP-2023"
+                  placeholder="Enter your employee ID"
                   className="input-field"
                 />
               </div>

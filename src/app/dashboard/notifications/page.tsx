@@ -103,8 +103,28 @@ export default function NotificationsPage() {
 
   if (loading) return (
     <DashboardLayout title="Notifications">
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
+      <div className="space-y-6 animate-fade-in">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="shimmer h-7 w-36 rounded-lg" />
+            <div className="shimmer h-4 w-72 rounded-lg" />
+          </div>
+        </div>
+
+        {/* Notification item skeletons */}
+        <div className="glass-card divide-y divide-border/40 overflow-hidden">
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} className="p-4 flex items-start gap-4">
+              <div className="shimmer w-9 h-9 rounded-full flex-shrink-0 mt-0.5" />
+              <div className="flex-1 space-y-2 min-w-0">
+                <div className="shimmer h-4 rounded-lg" style={{ width: `${55 + (i % 3) * 15}%` }} />
+                <div className="shimmer h-3 rounded-lg" style={{ width: `${70 + (i % 4) * 8}%` }} />
+                <div className="shimmer h-3 w-20 rounded-lg" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </DashboardLayout>
   )
