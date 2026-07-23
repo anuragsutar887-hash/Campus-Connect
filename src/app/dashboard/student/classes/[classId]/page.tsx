@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/layout/DashboardLayout'
+import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import { ClassWorkspace, UserProfile } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
@@ -14,6 +15,7 @@ import Link from 'next/link'
 export default function StudentClassWorkspacePage() {
   const { classId } = useParams<{ classId: string }>()
   const router = useRouter()
+  const { userProfile } = useAuth()
   const [cls, setCls] = useState<ClassWorkspace | null>(null)
   const [classmates, setClassmates] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
@@ -85,6 +87,9 @@ export default function StudentClassWorkspacePage() {
     load()
   }, [classId, router])
 
+  // Filter out current user so they only see their classmates
+  const otherClassmates = classmates.filter(s => s.uid !== userProfile?.uid)
+
   const modules = [
     { label: 'Notes & Resources', href: `/dashboard/student/notes?classId=${classId}`, icon: FileText, color: 'text-purple-400', bg: 'bg-purple-500/15' },
     { label: 'Assignments', href: `/dashboard/student/assignments?classId=${classId}`, icon: ClipboardList, color: 'text-yellow-400', bg: 'bg-yellow-500/15' },
@@ -122,7 +127,9 @@ export default function StudentClassWorkspacePage() {
         <div className="glass-card p-4 flex flex-wrap items-center gap-4 text-sm">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-muted-foreground" />
-            <span className="text-foreground"><strong>{cls?.students?.length || 0}</strong> classmates enrolled</span>
+            <span className="text-foreground">
+              <strong>{otherClassmates.length}</strong> {otherClassmates.length === 1 ? 'classmate' : 'classmates'}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <GraduationCap className="w-4 h-4 text-muted-foreground" />
@@ -151,12 +158,10 @@ export default function StudentClassWorkspacePage() {
 
         {/* Classmates list */}
         <div>
-          <h2 className="section-title mb-4">Classmates ({cls?.students?.length || 0})</h2>
-          {classmates.length === 0 ? (
+          <h2 className="section-title mb-4">Classmates ({otherClassmates.length})</h2>
+          {otherClassmates.length === 0 ? (
             <div className="glass-card p-8 text-center text-muted-foreground text-sm">
-              {cls?.students?.length ?? 0 > 0
-                ? 'Classmates enrolled, loading profile roster...'
-                : 'No other classmates are registered in this class yet.'}
+              No other classmates have joined this class yet.
             </div>
           ) : (
             <div className="glass-card overflow-hidden">
@@ -170,7 +175,7 @@ export default function StudentClassWorkspacePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {classmates.map((s, i) => (
+                  {otherClassmates.map((s, i) => (
                     <tr key={s.uid} className="border-b border-border/50 hover:bg-white/3 transition-colors">
                       <td className="p-4 text-muted-foreground">{i + 1}</td>
                       <td className="p-4 font-medium text-foreground">{s.name}</td>
