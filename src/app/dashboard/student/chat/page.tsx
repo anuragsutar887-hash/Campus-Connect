@@ -58,7 +58,7 @@ function StudentChatPageContent() {
         setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
       })
 
-    // Real-time subscription
+    // Real-time subscription for messages from OTHER users
     const channel = supabase
       .channel(`chat:${selectedClassId}`)
       .on('postgres_changes', {
@@ -66,11 +66,16 @@ function StudentChatPageContent() {
         filter: `class_id=eq.${selectedClassId}`
       }, (payload) => {
         const r = payload.new as Record<string, string>
-        setMessages(prev => [...prev, {
-          id: r.id, text: r.text, senderId: r.sender_id,
-          senderName: r.sender_name, createdAt: r.created_at,
-        } as ChatMessage])
-        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+        setMessages(prev => {
+          // Skip if this message is already in state (own message added optimistically)
+          if (prev.some(m => m.id === r.id)) return prev
+          const updated = [...prev, {
+            id: r.id, text: r.text, senderId: r.sender_id,
+            senderName: r.sender_name, createdAt: r.created_at,
+          } as ChatMessage]
+          setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+          return updated
+        })
       })
       .subscribe()
 
@@ -83,13 +88,38 @@ function StudentChatPageContent() {
     const text = inputText.trim()
     setInputText('')
 
-    const { error } = await supabase.from('chat_messages').insert([{
+    // ── Optimistic update: show message instantly ──────────────────────────
+    const tempId = `temp-${Date.now()}`
+    const optimisticMsg: ChatMessage = {
+      id: tempId,
+      text,
+      senderId: userProfile.uid,
+      senderName: userProfile.name,
+      createdAt: new Date().toISOString(),
+    }
+    setMessages(prev => [...prev, optimisticMsg])
+    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+
+    const { data, error } = await supabase.from('chat_messages').insert([{
       class_id:    selectedClassId,
       text,
       sender_id:   userProfile.uid,
       sender_name: userProfile.name,
-    }])
-    if (error) { toast.error('Failed to send'); setInputText(text) }
+    }]).select().single()
+
+    if (error) {
+      // Roll back the optimistic message on failure
+      toast.error('Failed to send message')
+      setMessages(prev => prev.filter(m => m.id !== tempId))
+      setInputText(text)
+    } else if (data) {
+      // Replace temp message with the confirmed DB row
+      setMessages(prev => prev.map(m =>
+        m.id === tempId
+          ? { id: data.id, text: data.text, senderId: data.sender_id, senderName: data.sender_name, createdAt: data.created_at }
+          : m
+      ))
+    }
   }
 
   if (loading) return (
